@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+
+# ============================================================================================ #
+#: Title           : ship (Show IP's)                                                          #
+#: Sypnosis        : ship                                                                      #
+#: Date Created    : Sat 11 Jan 2020 16:42:55 PM PST  /  Sat Jan 11 08:42:55 UTC 2020          #
+#: Last Edit       : Mon 02 Mar 2020 09:43:28 AM PST  /  Mon Mar  2 01:43:28 UTC 2020          #
+#: License         : GPLv3                                                                     #
+#: Version         : 1.0.0                                                                     #
+#: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
+#: Description     : Show device and IP within the LAN including ssh connection and public IP. #
+#: Options         : None                                                                      #
+#: Home Page       : None                                                                      #
+#: ExtComm         : curl,ip,sed                                                               #
+# ============================================================================================ #
+
+# ******************************************************************************************** #
+#                            The script name without the pathname.                             #
+# ******************************************************************************************** #
+
+scriptname=${BASH_SOURCE##*/}
+
+# ******************************************************************************************** #
+#   Warn and die functions, for exit messages and default status or an optional exit status.   #
+# ******************************************************************************************** #
+
+warn() {
+  printf '%s\n' "${scriptname}: $*"
+}
+
+die() {
+  local st=$?
+  case $2 in
+    *[^0-9]*|'') :;;
+    *) st=$2;;
+  esac
+
+  case $st in
+    0) warn "$1" ;;
+    *) warn "$1" >&2;;
+  esac
+
+  exit "$st"
+}
+
+# ******************************************************************************************** #
+#       Parse the script itself for the value of ExtComm on the headers, first 16 lines.       #
+# ******************************************************************************************** #
+
+shopt -s extglob
+
+value=ExtComm
+regex="^#:[[:space:]]+$value[[:space:]]+:[[:space:]]+(.[^#]+)[[:space:]]+#"
+extcomm=""
+
+i=0
+while read -r line; do
+  (( i++ <= 16 )) || continue
+  [[ -n  $line ]] || continue
+  [[ $line =~ $regex ]] && extcomm=${BASH_REMATCH[1]}
+done < "$BASH_SOURCE"
+
+[[ -n "${extcomm%%*( )}" ]] && IFS=, read -ra  ExtComm <<< "${extcomm%%*( )}" ##:For ExtComm parsing
+#
+shopt -u extglob
+#
+# ******************************************************************************************** #
+#          Check for the required app/executable is with in your PATH, exit otherwise.         #
+# ******************************************************************************************** #
+
+Missing=()
+MissingMessage="is either not installed or it is not in your PATH!"
+ExitMessage="Please install the following: "
+
+for apps in "${ExtComm[@]}"; do
+  if ! type -P "$apps" >/dev/null; then
+    printf '%s %s\n' "$apps" "$MissingMessage" >&2
+    Missing+=("$apps")
+  fi
+done
+(( ${#Missing[@]} )) && die "$ExitMessage[${Missing[*]}] exiting now!" 127
+
+# ******************************************************************************************** #
+#                            Print a welcome message for the user.                             #
+# ******************************************************************************************** #
+
+printf '\nWelcome: %s\n' "${USER:-$LOGNAME}"
+
+# ******************************************************************************************** #
+#                        Test for SSH connectivity and print the info.                         #
+# ******************************************************************************************** #
+
+if [[ $SSH_CONNECTION ]]; then
+  local_ip="${SSH_CONNECTION% *}"
+  local_ip="${local_ip##* }"
+  local_port="${SSH_CONNECTION##* }"
+  remote_port=${SSH_CONNECTION#* }
+  remote_port="${remote_port%% *}"
+  source_ip="${SSH_CONNECTION%% *}"
+  printf '\nYou are connected via SSH PROTOCOL with the following details:\n\n[RemoteHostIp]:   %s\n[RemoteHostPort]: %s\n[localHostIp]:    %s\n[LocalHostPort]:  %s\n' "$source_ip" "$remote_port" "$local_ip" "$local_port"
+fi
+
+# ******************************************************************************************** #
+#                    Parse the ip command for the nic's and print the info.                    #
+# ******************************************************************************************** #
+
+ip -o addr show up primary scope global | {
+  printf '\nL.A.N./Private IP%s\n\n'
+  while read -ra ip; do printf '[Device]: %-10s [Ip]: %s\n' "${ip[1]}" "${ip[3]%/*}";done
+}
+
+# ******************************************************************************************** #
+# Check for the PUBLIC ip by running curl against the icanhzip url and use sed to add PublicIP.#
+# ******************************************************************************************** #
+
+printf '\n%s\n\n' 'Looking up your Public IP....'
+
+{
+  exec curl -s http://icanhazip.com | sed 's/^/[PublicIP]: /'
+}
+
+# ============================================================================================= #
+#                                   >>> END OF SCRIPT <<<                                       #
+# ============================================================================================= #
