@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-
 # ============================================================================================ #
 #: Title           : ship (Show IP's)                                                          #
 #: Sypnosis        : ship                                                                      #
 #: Date Created    : Sat 11 Jan 2020 16:42:55 PM PST  /  Sat Jan 11 08:42:55 UTC 2020          #
-#: Last Edit       : Tue Jan 03 23:39:58 2023 +0800  /  Tue Jan 03 15:39:58 2023 UTC           #
+#: Last Edit       : Wed Jan 04 00:15:07 2023 +0800  /  Tue Jan 03 16:15:07 2023 UTC           #
 #: License         : GPLv3                                                                     #
 #: Version         : 1.0.0                                                                     #
-#: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
+#: Author          : Jason V. Ferrer '<jason@ferrer.com.ph>'                                   #
 #: Description     : Show device and IP within the LAN including ssh connection and public IP. #
 #: Options         : None                                                                      #
 #: Home Page       : None                                                                      #
