@@ -4,7 +4,7 @@
 #: Title           : ship (Show IP's)                                                          #
 #: Sypnosis        : ship                                                                      #
 #: Date Created    : Sat 11 Jan 2020 16:42:55 PM PST  /  Sat Jan 11 08:42:55 UTC 2020          #
-#: Last Edit       : Mon 02 Mar 2020 09:56:16 AM PST  /  Mon Mar  2 01:56:16 UTC 2020          #
+#: Last Edit       : Tue Jan 03 23:33:48 2023 +0800  /  Tue Jan 03 15:33:48 2023 UTC           #
 #: License         : GPLv3                                                                     #
 #: Version         : 1.0.0                                                                     #
 #: Author          : Jason V. Ferrer '<jetchisel@opensuse.org>'                                #
@@ -90,7 +90,7 @@ printf '\nWelcome: %s\n' "${USER:-$LOGNAME}"
 #                        Test for SSH connectivity and print the info.                         #
 # ******************************************************************************************** #
 
-if [[ $SSH_CONNECTION ]]; then
+if [[ -v SSH_CONNECTION ]]; then
   local_ip="${SSH_CONNECTION% *}"
   local_ip="${local_ip##* }"
   local_port="${SSH_CONNECTION##* }"
@@ -114,6 +114,8 @@ ip -o addr show up primary scope global | {
 # ******************************************************************************************** #
 
 printf '\n%s\n\n' 'Looking up your Public IP....'
+
+set -o pipefail
 
 {
   exec curl -s http://icanhazip.com | sed 's/^/[PublicIP]: /'
